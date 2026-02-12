@@ -1,0 +1,327 @@
+.analysis-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.analysis-panel.empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+}
+
+.empty-message p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.empty-message small {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.panel-header {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f3ff;
+  padding-bottom: 1rem;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.recommendation-box {
+  background: linear-gradient(135deg, #667eea15, #764ba215);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #667eea;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emoji {
+  font-size: 2rem;
+}
+
+.recommendation-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.confidence {
+  margin: 0.25rem 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.sentiment-section {
+  margin-bottom: 1.5rem;
+}
+
+.sentiment-section h4,
+.summary-section h4,
+.key-points-section h4,
+.reasoning-section h4,
+.critical-events-section h4,
+.revenue-outlook-section h4 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.sentiment-bars {
+  margin-bottom: 1rem;
+}
+
+.sentiment-bar {
+  margin-bottom: 0.75rem;
+  display: grid;
+  grid-template-columns: 60px 1fr 50px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sentiment-bar label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.bar-container {
+  height: 20px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.bar.positive {
+  background-color: #27ae60;
+}
+
+.bar.neutral {
+  background-color: #f39c12;
+}
+
+.bar.negative {
+  background-color: #e74c3c;
+}
+
+.sentiment-bar span {
+  font-size: 0.85rem;
+  color: #999;
+  text-align: right;
+}
+
+.sentiment-score {
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.sentiment-score span {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.sentiment-score span.positive {
+  color: #27ae60;
+}
+
+.sentiment-score span.negative {
+  color: #e74c3c;
+}
+
+.sentiment-score span.neutral {
+  color: #f39c12;
+}
+
+.summary-section,
+.key-points-section,
+.reasoning-section {
+  margin-bottom: 1.5rem;
+}
+
+.summary-section p,
+.reasoning-section p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.key-points-section ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.key-points-section li {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+/* Critical Events Section */
+.critical-events-section {
+  margin-bottom: 1.5rem;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.event-card {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #ccc;
+  background-color: #f9fafb;
+}
+
+.event-card.event-positive {
+  border-left-color: #27ae60;
+  background-color: #f0fdf4;
+}
+
+.event-card.event-negative {
+  border-left-color: #e74c3c;
+  background-color: #fef2f2;
+}
+
+.event-card.event-neutral {
+  border-left-color: #f39c12;
+  background-color: #fffbeb;
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.event-impact {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.impact-positive {
+  color: #166534;
+  background-color: #bbf7d0;
+}
+
+.impact-negative {
+  color: #991b1b;
+  background-color: #fecaca;
+}
+
+.impact-neutral {
+  color: #92400e;
+  background-color: #fde68a;
+}
+
+.event-category {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.event-description {
+  margin: 0;
+  color: #555;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+/* Revenue Outlook Section */
+.revenue-outlook-section {
+  margin-bottom: 1.5rem;
+}
+
+.outlook-direction {
+  margin-bottom: 0.75rem;
+}
+
+.direction-badge {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.direction-growth {
+  color: #166534;
+  background-color: #bbf7d0;
+}
+
+.direction-stable {
+  color: #1e40af;
+  background-color: #bfdbfe;
+}
+
+.direction-decline {
+  color: #991b1b;
+  background-color: #fecaca;
+}
+
+.direction-uncertain {
+  color: #92400e;
+  background-color: #fde68a;
+}
+
+.outlook-summary {
+  margin: 0 0 0.75rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.outlook-factors {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.outlook-factors li {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+
+.meta-info {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e6ed;
+  color: #999;
+  text-align: center;
+}

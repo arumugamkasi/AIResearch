@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import './StockList.css';
 
-function StockList({ stocks, selectedStock, onSelectStock, onAddStock, onRemoveStock }) {
+function StockList({ stocks, selectedStock, onSelectStock, onAddStock, onRemoveStock, favorites = [] }) {
+  const isFavorite = (symbol) => favorites.some(f => f.symbol === symbol);
   const [newSymbol, setNewSymbol] = useState('');
   const [newName, setNewName] = useState('');
 
@@ -51,7 +52,10 @@ function StockList({ stocks, selectedStock, onSelectStock, onAddStock, onRemoveS
               onClick={() => onSelectStock(stock)}
             >
               <div className="stock-info">
-                <h4>{stock.symbol}</h4>
+                <h4>
+                  {isFavorite(stock.symbol) && <span className="fav-indicator">⭐</span>}
+                  {stock.symbol}
+                </h4>
                 <small>{stock.name}</small>
               </div>
               <button

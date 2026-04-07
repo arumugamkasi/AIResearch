@@ -19,14 +19,14 @@ fi
 echo -e "${GREEN}Starting Backend...${NC}"
 cd backend
 
-# Check if venv exists
-if [ ! -d "venv" ]; then
+# Check if dedicated venv exists
+if [ ! -d "airesearch_env" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv venv
+    python3 -m venv airesearch_env
 fi
 
-# Activate venv and install requirements
-source venv/bin/activate
+# Activate the dedicated venv and install requirements
+source airesearch_env/bin/activate
 pip install -q -r requirements.txt
 
 # Start Flask server in background
@@ -58,7 +58,7 @@ echo -e "${GREEN}Frontend started (PID: $FRONTEND_PID)${NC}"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${GREEN}✓ Both servers are running!${NC}"
-echo -e "${BLUE}Backend: http://localhost:5000${NC}"
+echo -e "${BLUE}Backend: http://localhost:5001${NC}"
 echo -e "${BLUE}Frontend: http://localhost:3000${NC}"
 echo -e "${BLUE}========================================${NC}"
 

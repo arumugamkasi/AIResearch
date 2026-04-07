@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './NewsPanel.css';
 
-function NewsPanel({ stock, news, loading, onAnalyze }) {
+const PAGE_SIZE = 5;
+
+function NewsPanel({ news, loading }) {
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 when news changes (new stock selected)
+  useEffect(() => { setPage(1); }, [news]);
+
+  const totalPages = Math.ceil(news.length / PAGE_SIZE);
+  const start = (page - 1) * PAGE_SIZE;
+  const pageArticles = news.slice(start, start + PAGE_SIZE);
+
   return (
     <div className="news-panel">
       <div className="panel-header">
@@ -11,7 +22,7 @@ function NewsPanel({ stock, news, loading, onAnalyze }) {
 
       {loading ? (
         <div className="loading">
-          <p>Fetching news...</p>
+          <span className="spinner">⏳</span> Fetching news...
         </div>
       ) : news.length === 0 ? (
         <div className="no-news">
@@ -20,11 +31,18 @@ function NewsPanel({ stock, news, loading, onAnalyze }) {
       ) : (
         <>
           <div className="articles-list">
-            {news.map((article, index) => (
-              <article key={index} className="article-card">
+            {pageArticles.map((article, index) => (
+              <article key={start + index} className="article-card">
                 {article.image && (
                   <div className="article-image">
-                    <img src={article.image} alt={article.title} onError={(e) => e.target.style.display = 'none'} />
+                    <img
+                      src={article.image}
+                      alt={article.title}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.style.display = 'none';
+                      }}
+                    />
                   </div>
                 )}
                 <div className="article-content">
@@ -42,9 +60,25 @@ function NewsPanel({ stock, news, loading, onAnalyze }) {
             ))}
           </div>
 
-          <button className="analyze-btn" onClick={onAnalyze}>
-            📊 Analyze All Articles
-          </button>
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                className="page-btn"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                ‹
+              </button>
+              <span className="page-info">{page} / {totalPages}</span>
+              <button
+                className="page-btn"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                ›
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

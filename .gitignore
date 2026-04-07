@@ -1,0 +1,39 @@
+# Python virtual environments
+airesearch_env/
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Node
+frontend/node_modules/
+frontend/build/
+
+# Logs
+*.log
+backend/backend.log
+backend/backend_startup.log
+
+# macOS
+.DS_Store
+
+# ChromaDB / local ML data
+backend/chroma_data/
+
+# Database files
+backend/database/*.db
+
+# Editor
+.vscode/
+.idea/

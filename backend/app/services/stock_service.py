@@ -38,8 +38,9 @@ class StockService:
     
     def add_stock(self, symbol, name=None):
         """Add a new stock to track"""
-        if self.get_stock_by_symbol(symbol):
-            return None
+        existing = self.get_stock_by_symbol(symbol)
+        if existing:
+            return existing  # Return existing stock instead of None
         
         stock = {
             'symbol': symbol.upper(),

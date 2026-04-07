@@ -2,6 +2,7 @@ import ollama
 import os
 import json
 import re
+from datetime import datetime, timedelta
 
 from app.services.vector_store_service import VectorStoreService
 
@@ -14,6 +15,9 @@ class AnalysisService:
         self.ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
         self.model = os.getenv('OLLAMA_MODEL', 'llama3.2')
         self._ollama_client = None
+        self._cache = {}                  # symbol → {'result': dict, 'ts': datetime}
+        self._cache_ttl_min = 60          # Cache TTL in minutes
+        self._company_keywords_cache = {} # symbol → [keyword, ...]
 
     @property
     def client(self):
@@ -40,7 +44,7 @@ class AnalysisService:
             messages=messages,
             options={
                 'temperature': 0.3,
-                'num_predict': 2048,
+                'num_predict': 600,
             }
         )
 
@@ -52,12 +56,89 @@ class AnalysisService:
             return response.get('message', {}).get('content', '')
         return str(response)
 
+    def _get_company_keywords(self, symbol: str) -> list:
+        """Return search terms that indicate an article is ABOUT this company."""
+        if symbol not in self._company_keywords_cache:
+            keywords = [symbol.lower()]
+            try:
+                import yfinance as yf
+                info = yf.Ticker(symbol).info
+                name = info.get('longName') or info.get('shortName', '')
+                if name:
+                    # Add first word of company name (e.g. "JPMorgan" from "JPMorgan Chase")
+                    first_word = name.split()[0].lower()
+                    if len(first_word) > 3:  # Skip very short words
+                        keywords.append(first_word)
+            except Exception:
+                pass
+            self._company_keywords_cache[symbol] = keywords
+        return self._company_keywords_cache[symbol]
+
+    def _articles_to_context(self, symbol: str, articles: list) -> str:
+        """
+        Build a prompt context string from fresh articles.
+        Only includes articles where the company is the SUBJECT (not just mentioned
+        as an analyst commenting on another company).
+        """
+        keywords = self._get_company_keywords(symbol)
+
+        # Sort: higher credibility first
+        sorted_articles = sorted(
+            articles,
+            key=lambda a: a.get('credibility_score', 0.5),
+            reverse=True
+        )
+
+        # Patterns that indicate the keyword is acting as analyst/broker, not company subject
+        analyst_role_words = [
+            'analyst', 'says', 'raises', 'cuts', 'upgrades', 'downgrades',
+            'price target', 'initiates', 'reiterates', 'maintains', 'expects',
+        ]
+
+        selected = []
+        for a in sorted_articles:
+            title = a.get('title', '').lower()
+            desc  = a.get('description', a.get('text', ''))[:300].lower()
+
+            keyword_in_title = any(kw in title for kw in keywords)
+
+            # Reject if keyword appears ONLY in analyst-role context
+            # e.g. "JPMorgan analyst upgrades Apple" — JPM is the analyst, not the subject
+            analyst_role = keyword_in_title and any(
+                f"{kw} {role}" in title
+                for kw in keywords
+                for role in analyst_role_words
+            )
+
+            if keyword_in_title and not analyst_role:
+                selected.append(a)
+            elif not keyword_in_title and any(kw in desc[:150] for kw in keywords):
+                # Company mentioned early in description but not in title
+                if a.get('credibility_score', 0) >= 0.80:
+                    selected.append(a)
+
+            if len(selected) >= 5:
+                break
+
+        # Fallback: if filtering removed everything, use top 3 by credibility
+        if not selected:
+            selected = sorted_articles[:3]
+
+        lines = []
+        for i, a in enumerate(selected, 1):
+            title = a.get('title', 'Untitled')
+            text  = a.get('description', a.get('text', ''))[:200]
+            src   = a.get('source', 'Unknown')
+            lines.append(f"[{i}] {src} | {title} | {text}")
+
+        return "\n".join(lines)
+
     def _build_rag_context(self, symbol, query=None):
         """Retrieve relevant articles from ChromaDB for RAG context"""
         if query:
-            articles = self.vector_store.query_articles(symbol, query, n_results=10)
+            articles = self.vector_store.query_articles(symbol, query, n_results=5)
         else:
-            articles = self.vector_store.get_all_articles(symbol, limit=10)
+            articles = self.vector_store.get_all_articles(symbol, limit=5)
 
         if not articles:
             return "", []
@@ -65,23 +146,23 @@ class AnalysisService:
         context_parts = []
         for i, article in enumerate(articles, 1):
             title = article.get('title', 'Untitled')
-            text = article.get('text', article.get('description', ''))
+            text = article.get('text', article.get('description', ''))[:200]  # Truncate
             source = article.get('source', 'Unknown')
             date = article.get('published_date', 'Unknown date')
             context_parts.append(
-                f"[Article {i}] ({source}, {date})\n"
-                f"Title: {title}\n"
-                f"Content: {text}\n"
+                f"[{i}] {source} | {title} | {text}"
             )
 
-        context = "\n---\n".join(context_parts)
+        context = "\n".join(context_parts)
         return context, articles
 
     def get_recommendation(self, symbol, articles=None, current_position='none'):
         """Get investment recommendation using RAG"""
-        # Store any newly-passed articles in ChromaDB
-        if articles:
-            self.vector_store.store_articles(symbol, articles)
+        # ── Cache check: return immediately if fresh result exists ────────────
+        cached = self._cache.get(symbol)
+        if cached and (datetime.now() - cached['ts']) < timedelta(minutes=self._cache_ttl_min):
+            print(f"⚡ {symbol}: serving cached analysis ({self._cache_ttl_min} min TTL)")
+            return cached['result']
 
         if not self._check_ollama_available():
             return self._fallback_response(
@@ -89,24 +170,35 @@ class AnalysisService:
                 error="Ollama is not running. Start it with 'ollama serve' and ensure llama3.2 is pulled."
             )
 
-        # Build RAG context from ChromaDB
-        query = f"{symbol} stock financial performance outlook sentiment analysis"
-        context, retrieved_articles = self._build_rag_context(symbol, query)
+        # ── Build context directly from passed articles (bypass ChromaDB) ─────
+        # ChromaDB can contain cross-contaminated articles (e.g. "JPMorgan analyst
+        # says Apple will...") that mislead the LLM. Using fresh articles directly
+        # is more accurate.
+        if articles:
+            context = self._articles_to_context(symbol, articles)
+        else:
+            # Fallback to ChromaDB only when no articles provided
+            query = f"{symbol} stock financial performance outlook sentiment analysis"
+            context, _ = self._build_rag_context(symbol, query)
 
         if not context:
             return self._fallback_response(
                 symbol, articles or [],
-                error="No articles found in the knowledge base. Please fetch news first."
+                error="No articles found. Please fetch news first."
             )
 
         system_prompt = (
-            "You are an expert financial analyst AI. You analyze news articles about stocks "
-            "and provide comprehensive investment analysis across sentiment, critical events, "
-            "and revenue outlook. You must respond ONLY with valid JSON, no markdown, no extra text. "
+            f"You are an expert financial analyst AI focused exclusively on {symbol} as a company and investment. "
+            "You analyze news articles and provide comprehensive investment analysis. "
+            "CRITICAL RULE: Only analyze content where the company itself is the subject. "
+            f"If an article mentions {symbol} only as an analyst, broker, or commentator on ANOTHER company, "
+            "ignore those other companies entirely — focus only on what the article reveals about "
+            f"{symbol}'s own business, financials, products, and strategy. "
+            "You must respond ONLY with valid JSON, no markdown, no extra text. "
             "Always be balanced and note risks. IMPORTANT: always close all JSON braces and brackets."
         )
 
-        user_prompt = f"""Analyze the following news articles about {symbol} stock. Provide a comprehensive analysis covering three areas:
+        user_prompt = f"""Analyze the following news articles about {symbol} (the company itself). Provide a comprehensive analysis covering three areas:
 1. SENTIMENT: Overall market sentiment and reasoning
 2. CRITICAL EVENTS: Any credit/rating changes, leadership changes, M&A, legal, regulatory, or other company-changing events
 3. REVENUE OUTLOOK: Forward-looking revenue direction based on the news
@@ -133,6 +225,7 @@ Respond with EXACTLY this JSON (no markdown code fences, raw JSON only). IMPORTA
             raw_response = self._call_ollama(user_prompt, system_prompt)
             result = self._parse_analysis_response(raw_response, symbol)
             result['symbol'] = symbol
+            self._cache[symbol] = {'result': result, 'ts': datetime.now()}
             return result
         except Exception as e:
             print(f"Error in RAG analysis: {e}")

@@ -1,0 +1,150 @@
+.price-chart-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #f0f3ff;
+}
+
+.price-chart-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.current-price-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.price-change {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.price-change.positive {
+  color: #a8ffb8;
+}
+
+.price-change.negative {
+  color: #ffb3ba;
+}
+
+.price-meta {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.period-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.period-btn {
+  padding: 0.4rem 0.8rem;
+  background: #f5f7fa;
+  border: 1px solid #e0e6ed;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.period-btn:hover {
+  background: #e8ecff;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.period-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+.chart-container {
+  background: #fafbfc;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e0e6ed;
+}
+
+.loading,
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .price-chart-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .price-chart-section h4 {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .current-price-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .price-main {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .price-value {
+    font-size: 1.5rem;
+  }
+
+  .price-change {
+    font-size: 0.9rem;
+  }
+
+  .price-meta {
+    font-size: 0.75rem;
+  }
+
+  .period-selector {
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .period-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .chart-container {
+    padding: 0.75rem;
+  }
+
+  .loading,
+  .no-data {
+    padding: 1.5rem;
+    font-size: 0.85rem;
+  }
+}
